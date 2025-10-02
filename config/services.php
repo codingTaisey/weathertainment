@@ -17,7 +17,7 @@ return [
     'openweathermap' => [
         'key' => env('OPENWEATHERMAP_API_KEY'),
     ],
-    
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
@@ -40,3 +40,4 @@ return [
     ],
 
 ];
+
