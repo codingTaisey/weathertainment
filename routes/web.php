@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WeatherController; 
+use App\Http\Controllers\RankingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,3 +16,4 @@ use App\Http\Controllers\WeatherController;
 */
 
 Route::get('/', [WeatherController::class, 'index']); 
+Route::get('/ranking', [RankingController::class, 'index']);
