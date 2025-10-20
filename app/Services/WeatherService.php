@@ -89,15 +89,34 @@ class WeatherService
      * 天気データから「今日のダルさ言い訳予報」の確率を計算する
      * 【それっぽい計算式】気圧が低いほどダルいと仮定
      */
-    public function calculateLazinessExcuseRate(array $weatherData): int
+    public function getLazinessExcuse(array $weatherData): array
     {
         $pressure = $weatherData['main']['pressure'];
-        // 標準気圧(1013hPa)より低いほど確率が上がると仮定
+
         if ($pressure < 1000) {
-            return 95; // 1000hPa未満は激しい
+            return [
+                'level' => 5,
+                'excuse' => '【言い訳】今日は記録的な低気圧です。ベッドから出られただけでも奇跡。業務効率は諦めましょう。',
+                'color' => 'red',
+            ];
         } elseif ($pressure < 1010) {
-            return 1010 - $pressure + 30; // 1010hPaから下がっていくにつれて上昇
+            return [
+                'level' => 4,
+                'excuse' => '【言い訳】「気圧のせいで頭が重い…」と言えば8割の人が許してくれます。たぶん。',
+                'color' => 'orange',
+            ];
+        } elseif ($pressure < 1015) {
+            return [
+                'level' => 3,
+                'excuse' => '【言い訳】なんとなくダルいのは気圧の仕業。コーヒーを淹れて、ゆっくり始動しましょう。',
+                'color' => 'gold',
+            ];
+        } else {
+            return [
+                'level' => 1,
+                'excuse' => '【言い訳】残念ながら、今日は快晴！ダルさの言い訳は通用しません。頑張りましょう！',
+                'color' => 'green',
+            ];
         }
-        return 20;
     }
 }
