@@ -1,57 +1,57 @@
 <?php
 
-namespace App\Http\Controllers; 
+namespace App\Http\Controllers; // ← ここを修正
 
-use Illuminate\Http\Request;     
-use App\Services\WeatherService; 
+use Illuminate\Http\Request;      // ← ここを修正
+use App\Services\WeatherService;  // ← ここを修正
+
 class WeatherController extends Controller
 {
     /**
-     * トップページを表示し、天気情報と各指数、シェア用URLをビューに渡す
+     * トップページ or ダッシュボードに天気情報を表示する
      *
      * @param WeatherService $weatherService
      * @return \Illuminate\View\View
      */
     public function index(WeatherService $weatherService)
     {
-        $city = 'Tokyo';
+        $city = request()->input('prefecture', '東京都');
         $weatherData = $weatherService->getCurrentWeather($city);
 
-        if (!$weatherData) {
-            return view('welcome', ['weatherData' => null]);
+        // --- ビューに渡すための共通データをまとめる ---
+        $viewData = [];
+        if ($weatherData) {
+            $viewData = [
+                'weatherData' => $weatherData,
+                'fringeCollapseRate' => $weatherService->calculateFringeCollapseRate($weatherData),
+                'sneezeRate' => $weatherService->calculateSneezeRate($weatherData),
+                'umbrellaRegretLevel' => $weatherService->calculateUmbrellaRegretLevel($weatherData),
+                'catCurlRate' => $weatherService->calculateCatCurlRate($weatherData),
+                'lazinessExcuse' => $weatherService->getLazinessExcuse($weatherData),
+            ];
+
+            // シェアテキストの生成
+            $shareText = "今日の{$city}のダルさ予報はLv.{$viewData['lazinessExcuse']['level']}でした！\n「{$viewData['lazinessExcuse']['excuse']}」\n\nあなたもチェックしてみよう！";
+            $hashtags = 'Weathertainment,ダルさ言い訳予報';
+            $appUrl = url('/');
+
+            $viewData['twitterShareUrl'] = "https://twitter.com/intent/tweet?" . http_build_query([
+                'text' => $shareText,
+                'url' => $appUrl,
+                'hashtags' => $hashtags,
+            ]);
+        } else {
+            // 天気取得失敗時のデータ
+            $viewData['weatherData'] = null;
         }
 
-        // 各指数を計算
-        $fringeCollapseRate = $weatherService->calculateFringeCollapseRate($weatherData);
-        $sneezeRate = $weatherService->calculateSneezeRate($weatherData);
-        $umbrellaRegretLevel = $weatherService->calculateUmbrellaRegretLevel($weatherData);
-        $catCurlRate = $weatherService->calculateCatCurlRate($weatherData);
-        
-        // 新しい「ダルさ言い訳」メソッドを呼び出す
-        $lazinessExcuse = $weatherService->getLazinessExcuse($weatherData);
-
-
-        // --- シェア用URL生成ロジック ---
-        $shareText = "今日の{$city}のダルさ予報はLv.{$lazinessExcuse['level']}でした！\n「{$lazinessExcuse['excuse']}」\n\nあなたもチェックしてみよう！";
-        $hashtags = 'Weathertainment,ダルさ言い訳予報';
-        $appUrl = url('/');
-
-        $twitterShareUrl = "https://twitter.com/intent/tweet?" . http_build_query([
-            'text' => $shareText,
-            'url' => $appUrl,
-            'hashtags' => $hashtags,
-        ]);
-        // --- シェア用URL生成ロジックここまで ---
-
-        // 計算結果とシェア用URLをまとめてビューに渡す
-        return view('welcome', compact(
-            'weatherData',
-            'fringeCollapseRate',
-            'sneezeRate',
-            'umbrellaRegretLevel',
-            'catCurlRate',
-            'lazinessExcuse',
-            'twitterShareUrl'
-        ));
+        // ログイン状態に応じて、表示するビューを切り替える
+        if (auth()->check()) {
+            // ログイン済みユーザーには 'dashboard' ビューを返す
+            return view('dashboard', $viewData);
+        } else {
+            // ゲストユーザーには 'home' ビューを返す
+            return view('home', $viewData);
+        }
     }
 }
