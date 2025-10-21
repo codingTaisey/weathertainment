@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Http\Controllers; // ← ここを修正
+namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;      // ← ここを修正
-use App\Services\WeatherService;  // ← ここを修正
+use Illuminate\Http\Request;
+use App\Services\WeatherService;
+use Illuminate\Support\Facades\Auth;
 
 class WeatherController extends Controller
 {
-    /**
-     * トップページ or ダッシュボードに天気情報を表示する
-     *
-     * @param WeatherService $weatherService
-     * @return \Illuminate\View\View
-     */
     public function index(WeatherService $weatherService)
     {
-        $city = request()->input('prefecture', '東京都');
+        // パーソナライズ表示機能: ログインユーザーは登録都道府県をデフォルト表示
+        $defaultCity = '東京都';
+        if (Auth::check() && Auth::user()->prefecture) {
+            $defaultCity = Auth::user()->prefecture;
+        }
+        $city = request()->input('prefecture', $defaultCity);
         $weatherData = $weatherService->getCurrentWeather($city);
 
         // --- ビューに渡すための共通データをまとめる ---
@@ -27,6 +27,7 @@ class WeatherController extends Controller
                 'sneezeRate' => $weatherService->calculateSneezeRate($weatherData),
                 'umbrellaRegretLevel' => $weatherService->calculateUmbrellaRegretLevel($weatherData),
                 'catCurlRate' => $weatherService->calculateCatCurlRate($weatherData),
+                'laundryMoldRisk' => $weatherService->calculateLaundryMoldRisk($weatherData),
                 'lazinessExcuse' => $weatherService->getLazinessExcuse($weatherData),
             ];
 
@@ -46,7 +47,8 @@ class WeatherController extends Controller
         }
 
         // ログイン状態に応じて、表示するビューを切り替える
-        if (auth()->check()) {
+        // ★★★ このif文の書き方を修正 ★★★
+        if (Auth::check()) {
             // ログイン済みユーザーには 'dashboard' ビューを返す
             return view('dashboard', $viewData);
         } else {
