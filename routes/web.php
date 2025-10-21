@@ -1,63 +1,17 @@
 <?php
 
-namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\WeatherController;
+use App\Http\Controllers\RankingController;
+use App\Http\Controllers\Auth\DemoLoginController;
 
-use Illuminate\Http\Request;
-use App\Services\WeatherService;
+Route::get('/', [WeatherController::class, 'index'])->name('home');
+Route::get('/dashboard', [WeatherController::class, 'index'])->middleware('auth')->name('dashboard');
 
-class WeatherController extends Controller
-{
-    /**
-     * ゲスト用のトップページを表示する
-     */
-    public function home(WeatherService $weatherService)
-    {
-        // 天気取得と指数計算のロジック
-        $viewData = $this->getWeatherData($weatherService);
+Route::get('/ranking', [RankingController::class, 'index'])->name('ranking');
+Route::post('/ranking/update', [RankingController::class, 'update'])->name('ranking.update');
 
-        // homeビューを返す
-        return view('home', $viewData);
-    }
+// デモログイン機能
+Route::get('/demo-login', [DemoLoginController::class, 'login'])->name('demo.login');
 
-    /**
-     * ログインユーザー用のダッシュボードを表示する
-     */
-    public function dashboard(WeatherService $weatherService)
-    {
-        // 天気取得と指数計算のロジック
-        $viewData = $this->getWeatherData($weatherService);
-
-        // dashboardビューを返す
-        return view('dashboard', $viewData);
-    }
-
-    /**
-     * 天気情報を取得し、ビューに渡すためのデータを生成する共通メソッド
-     */
-    private function getWeatherData(WeatherService $weatherService): array
-    {
-        // 将来的には、ログインユーザーの登録地域を使う
-        $city = 'Tokyo';
-        $weatherData = $weatherService->getCurrentWeather($city);
-
-        if (!$weatherData) {
-            return ['weatherData' => null];
-        }
-
-        $viewData = [
-            'weatherData' => $weatherData,
-            'fringeCollapseRate' => $weatherService->calculateFringeCollapseRate($weatherData),
-            'sneezeRate' => $weatherService->calculateSneezeRate($weatherData),
-            'umbrellaRegretLevel' => $weatherService->calculateUmbrellaRegretLevel($weatherData),
-            'catCurlRate' => $weatherService->calculateCatCurlRate($weatherData),
-            'lazinessExcuse' => $weatherService->getLazinessExcuse($weatherData),
-        ];
-
-        $shareText = "今日の{$city}のダルさ予報はLv.{$viewData['lazinessExcuse']['level']}でした！..."; // (以下略)
-        $hashtags = 'Weathertainment,ダルさ言い訳予報';
-        $appUrl = url('/');
-        $viewData['twitterShareUrl'] = "https://twitter.com/intent/tweet?" . http_build_query(['text' => $shareText, 'url' => $appUrl, 'hashtags' => $hashtags]);
-
-        return $viewData;
-    }
-}
+require __DIR__ . '/auth.php';
