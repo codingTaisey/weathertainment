@@ -48,7 +48,6 @@ class WeatherService
         return min(100, max(0, (int)$rate));
     }
 
-    // ↓↓↓↓ ここから4つのメソッドを新しく追加しました！ ↓↓↓↓
 
     /**
      * 天気データから「くしゃみ発生確率」を計算する
@@ -120,33 +119,35 @@ class WeatherService
      */
     public function getLazinessExcuse(array $weatherData): array
     {
+        if (!isset($weatherData['main']['pressure'])) {
+            return ['level' => '??', 'excuse' => '気圧データが取得できませんでした。', 'color' => 'gray'];
+        }
         $pressure = $weatherData['main']['pressure'];
 
+        // ★★★ 日本の気圧変動に合わせた、より敏感な閾値に調整 ★★★
         if ($pressure < 1000) {
-            return [
-                'level' => 5,
-                'excuse' => '【言い訳】今日は記録的な低気圧です。ベッドから出られただけでも奇跡。業務効率は諦めましょう。',
-                'color' => 'red',
-            ];
-        } elseif ($pressure < 1010) {
-            return [
-                'level' => 4,
-                'excuse' => '【言い訳】「気圧のせいで頭が重い…」と言えば8割の人が許してくれます。たぶん。',
-                'color' => 'orange',
-            ];
-        } elseif ($pressure < 1015) {
-            return [
-                'level' => 3,
-                'excuse' => '【言い訳】なんとなくダルいのは気圧の仕業。コーヒーを淹れて、ゆっくり始動しましょう。',
-                'color' => 'gold',
-            ];
+            $level = 5;
+            $excuse = '【言い訳】今日は記録的な低気圧です。ベッドから出られただけでも奇跡。業務効率は諦めましょう。';
+            $color = '#e74c3c';
+        } elseif ($pressure < 1005) { // 以前は1008
+            $level = 4;
+            $excuse = '【言い訳】「気圧のせいで頭が重い…」と言えば8割の人が許してくれます。たぶん。';
+            $color = '#f39c12';
+        } elseif ($pressure < 1010) { // 以前は1015
+            $level = 3;
+            $excuse = '【言い訳】なんとなくダルいのは気圧の仕業。コーヒーを淹れて、ゆっくり始動しましょう。';
+            $color = '#f1c40f';
+        } elseif ($pressure < 1015) { // 以前は1022
+            $level = 2;
+            $excuse = '【言い訳】体調はまずまずのはず。ダルいのは、もしかして気のせい…？';
+            $color = '#2ecc71';
         } else {
-            return [
-                'level' => 1,
-                'excuse' => '【言い訳】残念ながら、今日は快晴！ダルさの言い訳は通用しません。頑張りましょう！',
-                'color' => 'green',
-            ];
+            $level = 1;
+            $excuse = '【言い訳】残念ながら、今日は快晴＆高気圧！ダルさの言い訳は通用しません。頑張りましょう！';
+            $color = '#3498db';
         }
+
+        return ['level' => $level, 'excuse' => $excuse, 'color' => $color];
     }
 
     /**
